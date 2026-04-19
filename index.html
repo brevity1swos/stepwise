@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Stepwise — terminal-native step-through tooling for regex, agent sessions, and AI-generated file writes.">
+<title>stepwise — terminal step-through tooling</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>stepwise</h1>
+  <p class="tagline">Step-through tooling for things that didn't have step-through debuggers.</p>
+  <p class="sub">Three terminal-native TUIs. Shared design, narrow scope, zero hosted components.</p>
+</header>
+
+<main>
+
+<section id="intro">
+  <h2>The gap</h2>
+  <p>Modern development produces artifacts that are hard to inspect step-by-step. Regex engines backtrack invisibly. Agent CLIs write thousands of JSONL entries per session. AI coding assistants edit dozens of files per turn. The existing tools either summarise after the fact (git commits, hosted dashboards, match highlights) or force a browser context-switch (regex101, Langfuse, LangSmith).</p>
+  <p>Stepwise is three narrow tools that cover this gap in the terminal — one per domain.</p>
+</section>
+
+<section id="tools">
+  <h2>The tools</h2>
+
+  <article class="tool">
+    <header class="tool-head">
+      <h3>rgx</h3>
+      <p class="one-liner">Step through regex execution — pattern editor, engine trace, backtrack heatmap.</p>
+    </header>
+    <div class="tool-body">
+      <img src="assets/rgx-demo.gif" alt="rgx demo" loading="lazy">
+      <ul>
+        <li>Three engines (Rust <code>regex</code>, <code>fancy-regex</code>, PCRE2) with auto-selection based on pattern features</li>
+        <li>PCRE2 callout-based step-through debugger with dual-cursor and backtrack heatmap</li>
+        <li>Plain-English explanation generated from the regex AST</li>
+        <li>Code generation for 8 languages, stdin/pipe mode, test suite assertions, workspace save/load</li>
+      </ul>
+      <p class="install"><code>cargo install rgx-cli</code> &middot; <a href="https://github.com/brevity1swos/rgx">repo</a></p>
+    </div>
+  </article>
+
+  <article class="tool">
+    <header class="tool-head">
+      <h3>agx</h3>
+      <p class="one-liner">Step through agent sessions — user turns, tool calls, tool results on a navigable timeline.</p>
+    </header>
+    <div class="tool-body">
+      <img src="assets/agx-demo.gif" alt="agx demo" loading="lazy">
+      <ul>
+        <li>Reads Claude Code, Codex CLI, and Gemini CLI session files directly — zero instrumentation</li>
+        <li>Bidirectional tool pairing: selecting a result shows the originating call input in one view</li>
+        <li>Time-travel scrub bar, filter, search, bookmarks, vim count prefixes, heatmap mode</li>
+        <li><code>--live</code> watches a session as it's written; <code>--diff</code> compares two sessions; <code>--summary</code> prints a non-interactive digest</li>
+      </ul>
+      <p class="install"><em>Not yet public — release coming soon.</em></p>
+    </div>
+  </article>
+
+  <article class="tool">
+    <header class="tool-head">
+      <h3>sift</h3>
+      <p class="one-liner">Step through AI-generated file writes — pre/post snapshots, accept or revert per change.</p>
+    </header>
+    <div class="tool-body">
+      <div class="code-preview"><pre><code>$ sift
+session 2026-04-15T09:12 &middot; 14 pending, 2 accepted
+
+[pending] turn-3  src/auth/session.rs    +42 -8
+[pending] turn-3  src/auth/mod.rs        +3 -0
+[pending] turn-4  tests/auth_test.rs     +28 -0
+[pending] turn-4  migrations/003.sql     +12 -0   (review: *.sql)
+
+$ sift d turn-3
+... unified diff ...
+$ sift ok turn-3
+$ sift undo turn-4</code></pre></div>
+      <ul>
+        <li>Hook-integrated with Claude Code, Gemini CLI, and Cline — intercepts every file Write/Edit/MultiEdit and Bash-tool mutation</li>
+        <li>Session-scoped ledger at <code>.sift/</code> with pre-write snapshots; revert works on accepted entries too</li>
+        <li>Policy rules (<code>.sift/policy.yml</code>) to allow / review / deny paths; strict mode blocks next prompt until pending is cleared</li>
+        <li><code>sift sweep</code> detects junk: exact duplicates, fuzzy duplicates, slop filenames, orphan markdown</li>
+      </ul>
+      <p class="install"><em>Not yet public — release coming soon.</em></p>
+    </div>
+  </article>
+</section>
+
+<section id="composition">
+  <h2>How they compose</h2>
+  <p>Each tool is standalone. The utility compounds when they're used together on the same workflow.</p>
+
+  <div class="workflow">
+    <div class="step">
+      <h4>1. Define the pattern &mdash; rgx</h4>
+      <p>You need a policy rule in <code>.sift/policy.yml</code> that auto-allows edits to test files but reviews anything touching <code>unsafe</code>. Draft the regex in rgx with live match preview, step through with Ctrl+D to confirm the engine behaves as expected, copy the final pattern.</p>
+    </div>
+    <div class="step">
+      <h4>2. Run the agent</h4>
+      <p>Claude Code / Codex / Gemini writes a JSONL session file as it works. Sift's hooks intercept each write and append to the <code>.sift/</code> ledger with pre-snapshots.</p>
+    </div>
+    <div class="step">
+      <h4>3. Inspect the session &mdash; agx</h4>
+      <p>Open the JSONL in agx. Scrub the timeline. See which user prompt led to which tool calls, which tool errored, where the assistant changed direction. Bookmark the turn where the writes you care about happened.</p>
+    </div>
+    <div class="step">
+      <h4>4. Review the writes &mdash; sift</h4>
+      <p>Walk the ledger with <code>sift review</code>. Each entry shows the diff against the pre-snapshot. Accept, revert, or edit-then-accept. <code>sift sweep</code> flags junk files before you commit.</p>
+    </div>
+  </div>
+</section>
+
+<section id="principles">
+  <h2>Shared principles</h2>
+  <dl>
+    <dt>Terminal-native</dt>
+    <dd>No browser, no hosted dashboard, no web UI. Works over SSH, in containers, in air-gapped environments. Rust + ratatui + crossterm.</dd>
+
+    <dt>Zero instrumentation</dt>
+    <dd>Each tool reads artifacts that already exist. rgx reads patterns you type. agx reads the JSONL your agent CLI already writes. sift reads file state the OS already tracks. No SDK changes, no wrappers, no proxies.</dd>
+
+    <dt>Zero telemetry</dt>
+    <dd>Nothing is sent anywhere. Sessions, patterns, snapshots all stay on disk.</dd>
+
+    <dt>Cross-CLI</dt>
+    <dd>agx supports Claude Code, Codex CLI, and Gemini CLI out of the box. sift supports Claude Code, Gemini CLI, and Cline via hooks. New formats add as a parser module, not a rewrite.</dd>
+
+    <dt>Narrow scope, deep engineering</dt>
+    <dd>Each tool does one thing. rgx doesn't try to replace regex101's permalink sharing. agx doesn't try to replace Langfuse's team analytics. sift doesn't try to replace git. Where the scope ends, the tool stops.</dd>
+
+    <dt>Sub-grain</dt>
+    <dd>They operate below the layer where existing tools stop. Git works at commit grain; sift at sub-commit. Dashboards work at session grain; agx at step grain. Regex testers work at match grain; rgx at engine-step grain.</dd>
+  </dl>
+</section>
+
+<section id="install">
+  <h2>Install</h2>
+  <pre><code>cargo install rgx-cli</code></pre>
+  <p><code>agx</code> and <code>sift</code> are not yet public — install commands will land here when their repos flip public. Requires Rust 1.74+. Platform coverage: Linux, macOS, Windows (rgx); Linux, macOS (agx, sift).</p>
+</section>
+
+<section id="status">
+  <h2>Status</h2>
+  <ul class="status">
+    <li><strong>rgx</strong> &mdash; stable, v0.10.x on crates.io, Homebrew, AUR. Active maintenance.</li>
+    <li><strong>agx</strong> &mdash; stable for Claude Code / Codex / Gemini. Not yet on crates.io.</li>
+    <li><strong>sift</strong> &mdash; beta. Hook integration working on Claude Code / Gemini / Cline. Schema may still change.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <p>Stepwise is three independent repositories under <a href="https://github.com/brevity1swos">brevity1swos</a>. MIT or Apache-2.0.</p>
+</footer>
+
+</body>
+</html>
