@@ -31,10 +31,11 @@ there are no underscore-prefixed paths. To attach a custom domain, add a
 
 ## Assets
 
-- `assets/agx-demo.gif` — copied from `../agx/assets/demo.gif`. Regenerate from
-  the agx repo's `assets/demo.tape` with `vhs`, then re-copy.
-- ccr and sift have no GIF; their tool cards render an ASCII / code-preview
-  block instead.
+All three tool cards use real demo GIFs:
+
+- `assets/ccr-demo.gif`, `assets/agx-demo.gif`, `assets/sift-demo.gif` — copied
+  from each tool repo's `assets/demo.gif`. Regenerate the source with `vhs`
+  (each repo has an `assets/demo.tape`), then re-copy.
 
 ## Content notes
 
