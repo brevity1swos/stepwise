@@ -3,24 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Stepwise — terminal-native step-through tooling for regex, agent sessions, and AI-generated file writes.">
-<title>stepwise — terminal step-through tooling</title>
+<meta name="description" content="Stepwise — terminal-native tooling for the AI-agent session lifecycle: find the session, inspect what happened, review what was kept.">
+<title>stepwise — terminal-native tooling for the AI-agent session lifecycle</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
   <h1>stepwise</h1>
-  <p class="tagline">Step-through tooling for things that didn't have step-through debuggers.</p>
-  <p class="sub">Three terminal-native TUIs. Shared design, narrow scope, zero hosted components.</p>
+  <p class="tagline">Terminal-native tooling for the AI-agent session lifecycle.</p>
+  <p class="sub">Three tools: <strong>ccr</strong> finds the session, <strong>agx</strong> walks through what happened, <strong>sift</strong> snapshots what the agent did in each turn. Shared design, narrow scope, zero hosted components.</p>
 </header>
 
 <main>
 
 <section id="intro">
   <h2>The gap</h2>
-  <p>Modern development produces artifacts that are hard to inspect step-by-step. Regex engines backtrack invisibly. Agent CLIs write thousands of JSONL entries per session. AI coding assistants edit dozens of files per turn. The existing tools either summarise after the fact (git commits, hosted dashboards, match highlights) or force a browser context-switch (regex101, Langfuse, LangSmith).</p>
-  <p>Stepwise is three narrow tools that cover this gap in the terminal — one per domain.</p>
+  <p>An AI-assisted workflow leaves three artifacts behind on your disk, and no terminal-native tool to walk through any of them. The session files pile up across <code>~/.claude</code>, <code>~/.codex</code>, <code>~/.gemini</code> and you lose track of which one has the thread you were on. Inside any given session, thousands of JSONL entries record user turns, tool calls, tool results — scroll them by hand and you miss the turn where the assistant silently changed strategy. The same session writes dozens of files, and git only shows you the commit-grain summary after everything has landed.</p>
+  <p>Stepwise is three narrow tools that cover this lifecycle in the terminal. Both you and the agent can walk through with them: the human opens the TUI, the agent reaches for the same tools&rsquo; CLIs over subprocess to answer questions about its own work.</p>
+</section>
+
+<section id="why">
+  <h2>Why walk through</h2>
+  <p>A session list sorted by recency surfaces the one thread worth resuming — and prevents you from starting a fresh session every time because the old ones are too hard to find. An agent session that ran fifty tool calls looks correct until you scrub to the one turn where the assistant changed direction. A green build looks correct until you walk the AI&rsquo;s writes and find <code>user_auth_v2.rs</code> sitting next to <code>user_auth.rs</code> because the assistant created a sibling instead of editing the original.</p>
+  <p>These failures live below the grain where existing tools look. The patterns that surface them are recognizable — but only if the substrate is visible. A session walker, a turn walker, and a per-write walker make the substrate visible, one layer per tool.</p>
+  <p>Human judgment catches these — not because AI review is bad, but because recognizing them <em>is what human judgment is for</em>. Stepwise does not try to automate the recognition. It exposes the granular substrate cleanly enough that you can do it yourself — or ask the assistant to do it for you. Every stepwise tool is designed to be dual-addressed: a human-facing TUI <em>and</em> a scriptable CLI / JSON surface. When you ask &ldquo;what did you change between turn 5 and turn 8?&rdquo;, the agent shells out to <code>sift state</code> (planned), parses the diff, and answers in-line. The agent doesn&rsquo;t have to scroll its own transcript; it has a walker too.</p>
+  <p class="thesis"><strong>The trial Stepwise is running:</strong> can humans <em>and</em> agents keep control over an automated agentic workflow without paying its efficiency for it? Every design choice in these tools is a bet that the answer is yes — by putting the same review surface in reach of whichever principal is driving, at the grain where the failures actually live.</p>
 </section>
 
 <section id="tools">
@@ -28,18 +36,29 @@
 
   <article class="tool">
     <header class="tool-head">
-      <h3>rgx</h3>
-      <p class="one-liner">Step through regex execution — pattern editor, engine trace, backtrack heatmap.</p>
+      <h3>ccr</h3>
+      <p class="one-liner">Walk through your CLI code session files &mdash; find the right one to resume, manage the rest.</p>
     </header>
     <div class="tool-body">
-      <img src="assets/rgx-demo.gif" alt="rgx demo" loading="lazy">
+      <div class="code-preview"><pre><code>&#x250C;&#x2500; ccr &mdash; 211 sessions  (2 possibly live) &#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502; Sessions                       &#x2502; Preview                                 &#x2502;
+&#x2502; &#x25B6; [claude] api-service    12m  &#x2502; tool:    claude                         &#x2502;
+&#x2502;     fix null deref in handler  &#x2502; cwd:     ~/projects/api-service         &#x2502;
+&#x2502;   [codex] web-app      1h &#x25CF; live &#x2502; last:   2026-04-19 14:22  (12m ago)   &#x2502;
+&#x2502;     retry on 429s then log     &#x2502; msgs:    47                             &#x2502;
+&#x2502;   [gemini] cli-tool       3d   &#x2502; id:      a1b2c3d4-5e6f-7890-abcd-&hellip;      &#x2502;
+&#x2502;     publish v2 release notes   &#x2502;                                         &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+&#x2191;&#x2193;/jk &middot; / filter &middot; Enter resume &middot; v view in agx &middot; d delete &middot; D prune &middot; ? help</code></pre></div>
       <ul>
-        <li>Three engines (Rust <code>regex</code>, <code>fancy-regex</code>, PCRE2) with auto-selection based on pattern features</li>
-        <li>PCRE2 callout-based step-through debugger with dual-cursor and backtrack heatmap</li>
-        <li>Plain-English explanation generated from the regex AST</li>
-        <li>Code generation for 8 languages, stdin/pipe mode, test suite assertions, workspace save/load</li>
+        <li>Scans the session stores of Claude Code, Codex, and Gemini CLI and shows every session in a shared TUI ranked by last activity. <code>Enter</code> resumes the selected session in its original working directory, via the right CLI, with its original session id</li>
+        <li>Live-session detection via <code>pgrep -f &lt;session-id&gt;</code> before resume; a confirmation modal warns before spawning a second attachment that would interleave JSONL writes and corrupt the session</li>
+        <li>Soft-delete + prune-by-age with <code>~/.ccr/trash/</code> (sidecar meta for <code>ccr restore</code>); non-interactive <code>ccr prune --older-than</code> / <code>ccr list</code> for scripts</li>
+        <li>Read-only at rest. Only writes are moving your own session files into the trash on explicit <code>d</code> / <code>D</code></li>
+        <li><strong>Cross-tool integration shipped today:</strong> press <code>v</code> on any session to open it in <a href="https://github.com/brevity1swos/agx">agx</a> for step-through inspection. Feature-detected: missing agx &rarr; status-bar hint, not a failure</li>
+        <li>Pluggable backend trait (<code>scan</code>, <code>resume</code>, <code>running</code>, <code>trash</code>). New CLIs add as a backend module, not a rewrite</li>
       </ul>
-      <p class="install"><code>cargo install rgx-cli</code> &middot; <a href="https://github.com/brevity1swos/rgx">repo</a></p>
+      <p class="install"><code>cargo install ccr</code> &middot; <a href="https://github.com/brevity1swos/ccr">repo</a> &middot; <a href="https://crates.io/crates/ccr">crates.io</a></p>
     </div>
   </article>
 
@@ -51,10 +70,13 @@
     <div class="tool-body">
       <img src="assets/agx-demo.gif" alt="agx demo" loading="lazy">
       <ul>
-        <li>Reads Claude Code, Codex CLI, and Gemini CLI session files directly — zero instrumentation</li>
-        <li>Bidirectional tool pairing: selecting a result shows the originating call input in one view</li>
-        <li>Time-travel scrub bar, filter, search, bookmarks, vim count prefixes, heatmap mode</li>
-        <li><code>--live</code> watches a session as it's written; <code>--diff</code> compares two sessions; <code>--summary</code> prints a non-interactive digest</li>
+        <li>Reads Claude Code, Codex CLI, Gemini CLI, OpenAI-compatible conversations, LangChain / LangSmith exports, Vercel AI SDK traces, and OpenTelemetry GenAI (JSON + binary protobuf) — zero instrumentation, format auto-detected</li>
+        <li>Bidirectional tool pairing: selecting a result shows the originating call input in one view. Branch / fork detection on resumed Claude Code sessions</li>
+        <li>Per-step token usage and USD cost estimation (hand-curated pricing table); side-by-side session diff (<code>--diff-tui</code>); corpus analytics across thousands of sessions with trajectory percentiles</li>
+        <li>Time-travel scrub bar, filter, search, bookmarks, per-step annotations (<code>a</code> / <code>A</code>), vim count prefixes, heatmap mode, opt-in semantic search (<code>//query</code>, <code>embedding-search</code> feature)</li>
+        <li><code>--live</code> watches a session as it's written, with optional desktop notifications on error or idle (<code>notifications</code> feature); <code>--scan-pii</code> flags credentials/PII heuristically; <code>--redact</code> masks secrets before publishing</li>
+        <li><code>--diff</code> compares two sessions; <code>--summary</code> prints a non-interactive digest; <code>--export md|html|json|trajectory-openai</code> for transcripts and RL / fine-tuning datasets</li>
+        <li><code>agx-core</code> workspace crate factors the pure parsers / timeline / corpus / pricing out of the TUI; <code>agx-py</code> (pyo3) and <code>agx-wasm</code> workspace members target Python and WASM consumers. <em>Not yet published</em> &mdash; PyPI / npm wheel matrix is Phase 7.4b; today these build locally via <code>maturin</code> / <code>wasm-pack</code></li>
       </ul>
       <p class="install"><em>Not yet public — release coming soon.</em></p>
     </div>
@@ -63,26 +85,28 @@
   <article class="tool">
     <header class="tool-head">
       <h3>sift</h3>
-      <p class="one-liner">Step through AI-generated file writes — pre/post snapshots, accept or revert per change.</p>
+      <p class="one-liner">Snapshots what the agent did in each turn &mdash; a queryable per-turn ledger for you and the assistant.</p>
     </header>
     <div class="tool-body">
-      <div class="code-preview"><pre><code>$ sift
-session 2026-04-15T09:12 &middot; 14 pending, 2 accepted
+      <div class="code-preview"><pre><code>you &gt; what did you change in turn 7?
+assistant &gt; $ sift list --turn 7 --json
+  src/auth/session.rs  (+42 -8)
+  src/auth/mod.rs      (+3 -0)
 
-[pending] turn-3  src/auth/session.rs    +42 -8
-[pending] turn-3  src/auth/mod.rs        +3 -0
-[pending] turn-4  tests/auth_test.rs     +28 -0
-[pending] turn-4  migrations/003.sql     +12 -0   (review: *.sql)
+you &gt; revert the second edit you made to src/auth.rs
+assistant &gt; $ sift list --path src/auth.rs --json
+            $ sift undo 01JR…f3a
 
-$ sift d turn-3
-... unified diff ...
-$ sift ok turn-3
-$ sift undo turn-4</code></pre></div>
+you &gt; what's different between turn 5 and turn 8?
+assistant &gt; $ sift state --at-turn 5 --json
+            $ sift state --at-turn 8 --json
+            3 paths diverge: …</code></pre></div>
       <ul>
-        <li>Hook-integrated with Claude Code, Gemini CLI, and Cline — intercepts every file Write/Edit/MultiEdit and Bash-tool mutation</li>
-        <li>Session-scoped ledger at <code>.sift/</code> with pre-write snapshots; revert works on accepted entries too</li>
-        <li>Policy rules (<code>.sift/policy.yml</code>) to allow / review / deny paths; strict mode blocks next prompt until pending is cleared</li>
-        <li><code>sift sweep</code> detects junk: exact duplicates, fuzzy duplicates, slop filenames, orphan markdown</li>
+        <li><strong>Proposed: agent as primary user.</strong> Hooks silently record every Write / Edit / MultiEdit and Bash-tool mutation, keyed by the conversation turn that caused it. The design intent is that when you ask the assistant &ldquo;what did you change in turn 7?&rdquo; or &ldquo;revert the third edit to <code>src/auth.rs</code>,&rdquo; it runs the matching <code>sift</code> command and answers. The reframe is recent (April 2026); validation that assistants reflexively reach for these commands is <em>pending dogfood</em> (sift ROADMAP Phase 1.4).</li>
+        <li>Hook-integrated with Claude Code, Gemini CLI, and Cline. Content-addressed SHA-1 snapshots under <code>.sift/sessions/&lt;id&gt;/</code>. Current surface: <code>sift list</code>, <code>sift log</code>, <code>sift d &lt;id&gt;</code>, <code>sift ok</code> / <code>sift undo</code>, <code>sift sweep</code>, <code>sift review</code> TUI. <em>Planned (Phase 1.7, v0.5):</em> <code>sift state --at-turn N</code> to reconstruct the file world at any point, and <code>sift export --format json</code> to publish the ledger as a versioned schema (<code>sift_export_version: 1</code>; draft at <a href="https://github.com/brevity1swos/sift/blob/main/docs/export-schema.md">sift/docs/export-schema.md</a>).</li>
+        <li><em>Planned (Phase 1.7):</em> <code>sift accept --by-commit HEAD</code> to close the git/sift grain gap — every pending entry whose post-state matches the commit auto-accepts, so you don&rsquo;t approve twice.</li>
+        <li>Policy rules (<code>.sift/policy.yml</code>, glob today; regex planned Phase 2); strict mode blocks the next prompt until pending is cleared; <code>sift sweep</code> detects junk (duplicates, slop filenames, orphan markdown).</li>
+        <li><em>Planned:</em> <code>sift doctor</code> (agx sibling detection, Phase 1.6) and <code>sift fsck</code> (ledger integrity + repair, Phase 1.5). An agent-facing command cookbook lives at <a href="https://github.com/brevity1swos/sift/blob/main/docs/agent-guide.md">sift/docs/agent-guide.md</a>.</li>
       </ul>
       <p class="install"><em>Not yet public — release coming soon.</em></p>
     </div>
@@ -91,25 +115,53 @@ $ sift undo turn-4</code></pre></div>
 
 <section id="composition">
   <h2>How they compose</h2>
-  <p>Each tool is standalone. The utility compounds when they're used together on the same workflow.</p>
+  <p>Each tool is standalone. The utility compounds when they're used together on the same workflow — and, crucially, when <em>different principals</em> (you, the assistant, another agent) are coordinating over the same artifacts.</p>
 
   <div class="workflow">
     <div class="step">
-      <h4>1. Define the pattern &mdash; rgx</h4>
-      <p>You need a policy rule in <code>.sift/policy.yml</code> that auto-allows edits to test files but reviews anything touching <code>unsafe</code>. Draft the regex in rgx with live match preview, step through with Ctrl+D to confirm the engine behaves as expected, copy the final pattern.</p>
+      <h4>1. Walk through your sessions &mdash; ccr</h4>
+      <p>You come back to work with 200+ old sessions scattered across <code>~/.claude</code>, <code>~/.codex</code>, and <code>~/.gemini</code>. <code>ccr</code> lists them in one TUI, ranked by recency, with a preview of the last few turns. <code>Enter</code> resumes the selected session in its original cwd with its original session id (and warns first if <code>pgrep</code> finds the session already running). <code>d</code> / <code>D</code> / <code>ccr prune --older-than</code> manage the rest. Before the agent does anything: find the right session.</p>
     </div>
     <div class="step">
       <h4>2. Run the agent</h4>
-      <p>Claude Code / Codex / Gemini writes a JSONL session file as it works. Sift's hooks intercept each write and append to the <code>.sift/</code> ledger with pre-snapshots.</p>
+      <p>Claude Code / Codex / Gemini writes a JSONL session file as it works. Sift's hooks intercept each write and append to the <code>.sift/</code> ledger with pre-snapshots, keyed by the turn that caused them.</p>
     </div>
     <div class="step">
-      <h4>3. Inspect the session &mdash; agx</h4>
-      <p>Open the JSONL in agx. Scrub the timeline. See which user prompt led to which tool calls, which tool errored, where the assistant changed direction. Bookmark the turn where the writes you care about happened.</p>
+      <h4>3. Walk through the session &mdash; agx</h4>
+      <p>You scrub the timeline in the TUI; <em>or</em> a reviewer agent runs <code>agx --summary</code> / <code>agx --export json</code> and reports which turn errored, where the assistant changed direction, and what it cost. From ccr&rsquo;s session list, press <code>v</code> to hand the selected session straight to agx &mdash; no copy-pasting paths. Same tool, two entry points.</p>
     </div>
     <div class="step">
-      <h4>4. Review the writes &mdash; sift</h4>
-      <p>Walk the ledger with <code>sift review</code>. Each entry shows the diff against the pre-snapshot. Accept, revert, or edit-then-accept. <code>sift sweep</code> flags junk files before you commit.</p>
+      <h4>4. Snapshot what the agent did in each turn &mdash; sift</h4>
+      <p>As the agent writes, sift records a pre/post snapshot per file per turn, keyed by the conversation turn that caused it. Today: walk the ledger in <code>sift review</code>, or query it via <code>sift list</code> / <code>sift log</code> / <code>sift d &lt;id&gt;</code> and accept / revert via <code>sift ok</code> / <code>sift undo</code>. <code>sift sweep</code> flags junk before the next commit. <em>Planned (Phase 1.7)</em>: natural-language flows like &ldquo;revert the third edit to <code>src/auth.rs</code>&rdquo; resolve to <code>sift list --path src/auth.rs --json</code> + <code>sift undo &lt;id&gt;</code>; after <code>git commit</code>, <code>sift accept --by-commit HEAD</code> settles the ledger against what was approved.</p>
     </div>
+  </div>
+
+  <div class="integrations">
+    <h4>Communication surfaces &mdash; how principals could talk through the tools</h4>
+    <p class="integrations-note" style="margin-top: 0; margin-bottom: 14px;">The design intent is that every stepwise tool is dual-addressed: a human-facing TUI <em>and</em> a scriptable CLI / JSON surface, so the same substrate supports three directions of communication. Ship status below each bullet distinguishes what works today from what&rsquo;s still aspirational. Current gaps are tracked in <a href="https://github.com/brevity1swos/stepwise/blob/main/docs/gaps.md">docs/gaps.md</a>.</p>
+    <dl>
+      <dt>human &rarr; agent</dt>
+      <dd>You ask in natural language; the assistant shells out to (today) <code>sift list</code> / <code>sift log</code> / <code>agx --summary</code>, and (planned) <code>sift state --at-turn</code>, and answers with grounded, byte-precise results. Depends on the assistant <em>knowing to reach for these commands</em> &mdash; agent-guides land as <code>docs/agent-guide.md</code> in each repo (shipped for agx and sift, pending for ccr) plus project-CLAUDE.md injection via each tool&rsquo;s <code>init</code> (pending). Reflex-use by real assistants is unvalidated &mdash; dogfood pending.</dd>
+
+      <dt>agent &rarr; human</dt>
+      <dd>When the assistant reports &ldquo;I changed 3 files in turn 7&rdquo;, the claim should be backed by <code>sift list --turn 7</code> rather than recollection. Today <code>sift list</code> + <code>sift d</code> + <code>agx --summary</code> / <code>--export md|html|json</code> all exist and return byte-precise results. What&rsquo;s missing: structured error shapes at parity with text output (<code>{"error": "no_entries_for_turn", "turn": 99}</code>), so consumers never have to scrape human prose. Partially shipped.</dd>
+
+      <dt>agent &rarr; agent</dt>
+      <dd>A downstream review agent would consume <code>agx --export json</code> / <code>trajectory-openai</code> and <code>sift export --format json</code> &mdash; versioned schemas, zero instrumentation. Current status: agx JSON schema is documented with SemVer commitments (<a href="https://github.com/brevity1swos/agx/blob/main/docs/stability.md">agx/docs/stability.md</a>). sift&rsquo;s schema is drafted but ships with Phase 1.7. <strong>No known downstream consumer exists yet</strong> &mdash; the stability commitment hasn&rsquo;t been stress-tested. Kill criterion: sift drops the commitment if no consumer materializes in 6 months. <code>agx-core</code> is a workspace crate; <code>agx-py</code> / <code>agx-wasm</code> members exist but are not yet published to PyPI / npm (wheel matrix is Phase 7.4b).</dd>
+    </dl>
+
+    <h4 style="margin-top: 28px;">Named integrations &mdash; when multiple tools are installed</h4>
+    <dl>
+      <dt>Session hand-off <em>(shipped &mdash; ccr v0.1.0, 2026-04-20)</em></dt>
+      <dd>Press <code>v</code> on any session in <code>ccr</code> to open it in <code>agx</code> for step-through inspection &mdash; the session file path and backend are passed through automatically. Feature-detected: missing <code>agx</code> &rarr; status-bar hint, not a failure. The first cross-tool integration in the suite that&rsquo;s actually end-to-end working today; the others below are still planned.</dd>
+
+      <dt>Timeline jump <em>(planned &mdash; sift Phase 1.3; session-level only until agx ships <code>--jump-to &lt;session&gt;:&lt;step&gt;</code>)</em></dt>
+      <dd>Press <code>t</code> on any entry in <code>sift review</code> to hand off to agx on the session&rsquo;s transcript. Missing agx &rarr; install hint, not a failure. Blocker: agx does not yet serialize <code>tool_use_id</code> on <code>StepKind::ToolUse</code>, so step-level attribution has no join key.</dd>
+
+      <dt>Sift overlay in agx <em>(planned &mdash; sift Phase 1.7 publishes the contract, agx downstream consumes)</em></dt>
+      <dd>agx consumes <code>sift export --format json</code> to decorate timeline steps with their accept / revert / edited status, and to diff the file world between any two agx-selected turns via <code>sift state</code>. Schema draft: <a href="https://github.com/brevity1swos/sift/blob/main/docs/export-schema.md">sift/docs/export-schema.md</a>.</dd>
+    </dl>
+    <p class="integrations-note">Each integration is feature-detected at runtime. Missing sibling &rarr; status-bar install hint, not a hard failure. Install any subset; integrations light up for the ones you have. Subprocess boundary only &mdash; no shared Rust crate, no coordinated release train.</p>
   </div>
 </section>
 
@@ -119,36 +171,48 @@ $ sift undo turn-4</code></pre></div>
     <dt>Terminal-native</dt>
     <dd>No browser, no hosted dashboard, no web UI. Works over SSH, in containers, in air-gapped environments. Rust + ratatui + crossterm.</dd>
 
+    <dt>Dual-addressed <em>(goal; partially implemented)</em></dt>
+    <dd>The intent is that every tool is reachable two ways &mdash; a human-facing TUI for walkthrough exploration, and a scriptable CLI with <code>--json</code> / <code>--export</code> so an agent can query it on your behalf. Today: ccr ships the TUI but has no <code>--json</code> surface yet; agx has <code>--summary</code> / <code>--export</code> / <code>corpus --jsonl</code>; sift has <code>--json</code> on several subcommands. Gaps: a machine-readable surface for ccr, <code>--json</code> parity across all sift subcommands, structured error shapes, and an <code>--ai-help</code> flag per tool.</dd>
+
     <dt>Zero instrumentation</dt>
-    <dd>Each tool reads artifacts that already exist. rgx reads patterns you type. agx reads the JSONL your agent CLI already writes. sift reads file state the OS already tracks. No SDK changes, no wrappers, no proxies.</dd>
+    <dd>Each tool reads artifacts that already exist. ccr reads the session stores your CLIs already write to. agx reads the JSONL your agent CLI already writes. sift reads file state the OS already tracks. No SDK changes, no wrappers, no proxies.</dd>
 
     <dt>Zero telemetry</dt>
-    <dd>Nothing is sent anywhere. Sessions, patterns, snapshots all stay on disk.</dd>
+    <dd>Nothing is sent anywhere. Sessions, snapshots, everything stays on disk.</dd>
+
+    <dt>Versioned export schemas <em>(committed for agx; drafted for sift)</em></dt>
+    <dd>Anything meant to be consumed by a sibling or downstream agent is intended to be versioned. agx documents SemVer commitments for its JSON export, trajectory-openai export, and <code>agx-core</code> public API in <a href="https://github.com/brevity1swos/agx/blob/main/docs/stability.md">docs/stability.md</a>. sift&rsquo;s <code>sift_export_version: 1</code> schema is drafted but ships with Phase 1.7 / v0.5. ccr has no machine-readable export yet.</dd>
 
     <dt>Cross-CLI</dt>
-    <dd>agx supports Claude Code, Codex CLI, and Gemini CLI out of the box. sift supports Claude Code, Gemini CLI, and Cline via hooks. New formats add as a parser module, not a rewrite.</dd>
+    <dd>ccr resumes Claude Code, Codex, and Gemini CLI from a shared picker. agx supports Claude Code, Codex CLI, Gemini CLI, generic OpenAI-compatible, LangChain / LangSmith, Vercel AI SDK, and OpenTelemetry GenAI (JSON + binary protobuf) out of the box. sift supports Claude Code, Gemini CLI, and Cline via hooks. New CLIs add as a backend module (ccr) or parser module (agx, sift), not a rewrite.</dd>
 
     <dt>Narrow scope, deep engineering</dt>
-    <dd>Each tool does one thing. rgx doesn't try to replace regex101's permalink sharing. agx doesn't try to replace Langfuse's team analytics. sift doesn't try to replace git. Where the scope ends, the tool stops.</dd>
+    <dd>Each tool does one thing. ccr doesn&rsquo;t try to replace your assistant&rsquo;s own <code>--resume</code>; it just lists what&rsquo;s resumable across tools. agx doesn&rsquo;t try to replace Langfuse&rsquo;s team analytics. sift doesn&rsquo;t try to replace git. Where the scope ends, the tool stops.</dd>
 
     <dt>Sub-grain</dt>
-    <dd>They operate below the layer where existing tools stop. Git works at commit grain; sift at sub-commit. Dashboards work at session grain; agx at step grain. Regex testers work at match grain; rgx at engine-step grain.</dd>
+    <dd>They operate below the layer where existing tools stop. Per-CLI session finders work one tool at a time; ccr walks across them at the session-store grain. Git works at commit grain; sift at per-turn sub-commit grain. Dashboards work at session grain; agx at step grain.</dd>
   </dl>
 </section>
 
 <section id="install">
   <h2>Install</h2>
-  <pre><code>cargo install rgx-cli</code></pre>
-  <p><code>agx</code> and <code>sift</code> are not yet public — install commands will land here when their repos flip public. Requires Rust 1.74+. Platform coverage: Linux, macOS, Windows (rgx); Linux, macOS (agx, sift).</p>
+  <pre><code>cargo install ccr</code></pre>
+  <p><code>agx</code> and <code>sift</code> are not yet public &mdash; install commands will land here when their repos flip public. Rust toolchain: 1.88+ for ccr, 1.85+ (edition 2024) for agx, 1.75+ for sift. Platform coverage: Linux, macOS, Windows (ccr); Linux, macOS (agx, sift).</p>
 </section>
 
 <section id="status">
   <h2>Status</h2>
   <ul class="status">
-    <li><strong>rgx</strong> &mdash; stable, v0.10.x on crates.io, Homebrew, AUR. Active maintenance.</li>
-    <li><strong>agx</strong> &mdash; stable for Claude Code / Codex / Gemini. Not yet on crates.io.</li>
-    <li><strong>sift</strong> &mdash; beta. Hook integration working on Claude Code / Gemini / Cline. Schema may still change.</li>
+    <li><strong>ccr</strong> &mdash; v0.1.0 on crates.io (2026-04-20). Supports Claude Code / Codex / Gemini CLI via the <code>Backend</code> trait; soft-delete + prune-by-age + <code>ccr restore</code>; live-session detection via <code>pgrep</code>. Ships the <code>v</code> &rarr; <code>agx</code> session hand-off &mdash; the only genuinely end-to-end cross-tool integration in the suite today. <em>Gaps</em>: no <code>--json</code> / <code>--export</code> surface (agents can&rsquo;t query the session index yet), no <code>docs/agent-guide.md</code>, no formal stability document.</li>
+    <li><strong>agx</strong> &mdash; pre-1.0 (v0.1.x), not yet on crates.io. Seven session formats, corpus analytics, side-by-side diff, per-step annotations, opt-in semantic search, PII scanning, trajectory-openai export. <code>docs/stability.md</code> + <code>docs/agent-guide.md</code> + <code>docs/mcp-integration.md</code> shipped. <em>Gaps</em>: <code>tool_use_id</code> not yet serialized on <code>StepKind::ToolUse</code> (blocks sift join); <code>--jump-to &lt;session&gt;:&lt;step&gt;</code> not shipped; <code>agx-py</code> / <code>agx-wasm</code> not yet on PyPI / npm.</li>
+    <li><strong>sift</strong> &mdash; v0.2.x shipped; v0.3 in progress. Hook integration on Claude Code / Gemini / Cline, Codex in the roadmap. The &ldquo;per-turn snapshot oracle&rdquo; reframe and agent-as-primary-user thesis are recent (2026-04-19) and <em>unvalidated</em> &mdash; dogfood (ROADMAP Phase 1.4) pending. <em>Gaps</em>: <code>sift state --at-turn</code>, <code>sift export --format json</code>, <code>sift accept --by-commit</code>, <code>sift doctor</code>, <code>sift fsck</code>, Timeline-jump <code>t</code> keybind all planned for Phase 1.5&ndash;1.7, not shipped.</li>
+    <li><strong>cross-tool</strong> &mdash; ccr &rarr; agx session hand-off is the one shipped bond. Everything else between the three tools is still planned. No downstream agent-to-agent consumer of the export schemas exists today; until one ships, the &ldquo;shared communication substrate&rdquo; framing is a design hypothesis, not a measured outcome. See <a href="https://github.com/brevity1swos/stepwise/blob/main/docs/gaps.md">docs/gaps.md</a>.</li>
   </ul>
+</section>
+
+<section id="related">
+  <h2>Related</h2>
+  <p>By the same author, same design principles &mdash; <a href="https://github.com/brevity1swos/rgx"><code>rgx</code></a>, a terminal regex debugger.</p>
 </section>
 
 </main>
