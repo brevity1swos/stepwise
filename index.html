@@ -49,14 +49,15 @@
 &#x2502;   [gemini] cli-tool       3d   &#x2502; id:      a1b2c3d4-5e6f-7890-abcd-&hellip;      &#x2502;
 &#x2502;     publish v2 release notes   &#x2502;                                         &#x2502;
 &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
-&#x2191;&#x2193;/jk &middot; / filter &middot; Enter resume &middot; v view in agx &middot; d delete &middot; D prune &middot; ? help</code></pre></div>
+&#x2191;&#x2193;/jk &middot; / filter &middot; Enter resume &middot; v view in agx &middot; b bookmark &middot; n nickname &middot; ? help</code></pre></div>
       <ul>
         <li>Scans the session stores of Claude Code, Codex, and Gemini CLI and shows every session in a shared TUI ranked by last activity. <code>Enter</code> resumes the selected session in its original working directory, via the right CLI, with its original session id</li>
         <li>Live-session detection via <code>pgrep -f &lt;session-id&gt;</code> before resume; a confirmation modal warns before spawning a second attachment that would interleave JSONL writes and corrupt the session</li>
-        <li>Soft-delete + prune-by-age with <code>~/.ccr/trash/</code> (sidecar meta for <code>ccr restore</code>); non-interactive <code>ccr prune --older-than</code> / <code>ccr list</code> for scripts</li>
-        <li>Read-only at rest. Only writes are moving your own session files into the trash on explicit <code>d</code> / <code>D</code></li>
+        <li>Press <code>n</code> to give any session a yellow nickname and <code>b</code> to bookmark it (★); both persist as sidecar files and are searched by <code>/</code> alongside title, cwd, tool, and content</li>
+        <li>Read-only at rest. <code>ccr</code> never modifies your session files; the only writes are the bookmark and nickname sidecars under <code>~/.ccr/</code></li>
+        <li>Unix-composable CLI surface for scripts and agents: <code>ccr list</code>, <code>ccr path &lt;id&gt;</code>, <code>ccr show &lt;id&gt;</code>, <code>ccr export &lt;id&gt; --format json</code>, and <code>ccr stats</code> (per-tool / per-project / 30-day histogram)</li>
         <li><strong>Cross-tool integration shipped today:</strong> press <code>v</code> on any session to open it in <a href="https://github.com/brevity1swos/agx">agx</a> for step-through inspection. Feature-detected: missing agx &rarr; status-bar hint, not a failure</li>
-        <li>Pluggable backend trait (<code>scan</code>, <code>resume</code>, <code>running</code>, <code>trash</code>). New CLIs add as a backend module, not a rewrite</li>
+        <li>Pluggable backend trait (<code>scan</code>, <code>resume</code>, <code>running</code>, <code>all_turns</code>). New CLIs add as a backend module, not a rewrite</li>
       </ul>
       <p class="install"><code>cargo install ccr</code> &middot; <a href="https://github.com/brevity1swos/ccr">repo</a> &middot; <a href="https://crates.io/crates/ccr">crates.io</a></p>
     </div>
@@ -78,7 +79,7 @@
         <li><code>--diff</code> compares two sessions; <code>--summary</code> prints a non-interactive digest; <code>--export md|html|json|trajectory-openai</code> for transcripts and RL / fine-tuning datasets</li>
         <li><code>agx-core</code> workspace crate factors the pure parsers / timeline / corpus / pricing out of the TUI; <code>agx-py</code> (pyo3) and <code>agx-wasm</code> workspace members target Python and WASM consumers. <em>Not yet published</em> &mdash; PyPI / npm wheel matrix is Phase 7.4b; today these build locally via <code>maturin</code> / <code>wasm-pack</code></li>
       </ul>
-      <p class="install"><em>Not yet public — release coming soon.</em></p>
+      <p class="install"><code>cargo install agx-tui</code> &middot; <a href="https://github.com/brevity1swos/agx">repo</a> &middot; <a href="https://crates.io/crates/agx-tui">crates.io</a></p>
     </div>
   </article>
 
@@ -108,7 +109,7 @@ assistant &gt; $ sift state --at-turn 5 --json
         <li>Policy rules (<code>.sift/policy.yml</code>, glob today; regex planned Phase 2); strict mode blocks the next prompt until pending is cleared; <code>sift sweep</code> detects junk (duplicates, slop filenames, orphan markdown).</li>
         <li><em>Planned:</em> <code>sift doctor</code> (agx sibling detection, Phase 1.6) and <code>sift fsck</code> (ledger integrity + repair, Phase 1.5). An agent-facing command cookbook lives at <a href="https://github.com/brevity1swos/sift/blob/main/docs/agent-guide.md">sift/docs/agent-guide.md</a>.</li>
       </ul>
-      <p class="install"><em>Not yet public — release coming soon.</em></p>
+      <p class="install"><a href="https://github.com/brevity1swos/sift">repo</a> &middot; public &mdash; build from source; not yet on crates.io (the <code>sift</code> crate name is taken by an unrelated project)</p>
     </div>
   </article>
 </section>
@@ -120,7 +121,7 @@ assistant &gt; $ sift state --at-turn 5 --json
   <div class="workflow">
     <div class="step">
       <h4>1. Walk through your sessions &mdash; ccr</h4>
-      <p>You come back to work with 200+ old sessions scattered across <code>~/.claude</code>, <code>~/.codex</code>, and <code>~/.gemini</code>. <code>ccr</code> lists them in one TUI, ranked by recency, with a preview of the last few turns. <code>Enter</code> resumes the selected session in its original cwd with its original session id (and warns first if <code>pgrep</code> finds the session already running). <code>d</code> / <code>D</code> / <code>ccr prune --older-than</code> manage the rest. Before the agent does anything: find the right session.</p>
+      <p>You come back to work with 200+ old sessions scattered across <code>~/.claude</code>, <code>~/.codex</code>, and <code>~/.gemini</code>. <code>ccr</code> lists them in one TUI, ranked by recency, with a preview of the last few turns. <code>Enter</code> resumes the selected session in its original cwd with its original session id (and warns first if <code>pgrep</code> finds the session already running). Nickname (<code>n</code>) and bookmark (<code>b</code>) the threads you keep returning to. Before the agent does anything: find the right session.</p>
     </div>
     <div class="step">
       <h4>2. Run the agent</h4>
@@ -172,7 +173,7 @@ assistant &gt; $ sift state --at-turn 5 --json
     <dd>No browser, no hosted dashboard, no web UI. Works over SSH, in containers, in air-gapped environments. Rust + ratatui + crossterm.</dd>
 
     <dt>Dual-addressed <em>(goal; partially implemented)</em></dt>
-    <dd>The intent is that every tool is reachable two ways &mdash; a human-facing TUI for walkthrough exploration, and a scriptable CLI with <code>--json</code> / <code>--export</code> so an agent can query it on your behalf. Today: ccr ships the TUI but has no <code>--json</code> surface yet; agx has <code>--summary</code> / <code>--export</code> / <code>corpus --jsonl</code>; sift has <code>--json</code> on several subcommands. Gaps: a machine-readable surface for ccr, <code>--json</code> parity across all sift subcommands, structured error shapes, and an <code>--ai-help</code> flag per tool.</dd>
+    <dd>The intent is that every tool is reachable two ways &mdash; a human-facing TUI for walkthrough exploration, and a scriptable CLI with <code>--json</code> / <code>--export</code> so an agent can query it on your behalf. Today: ccr ships the TUI plus a scriptable CLI (<code>ccr list</code> / <code>path</code> / <code>show</code> / <code>stats</code>, and <code>ccr export --format json</code>); agx has <code>--summary</code> / <code>--export</code> / <code>corpus --jsonl</code>; sift has <code>--json</code> on several subcommands. Gaps: a versioned, stability-committed schema for ccr&rsquo;s export, <code>--json</code> parity across all sift subcommands, structured error shapes, and an <code>--ai-help</code> flag per tool.</dd>
 
     <dt>Zero instrumentation</dt>
     <dd>Each tool reads artifacts that already exist. ccr reads the session stores your CLIs already write to. agx reads the JSONL your agent CLI already writes. sift reads file state the OS already tracks. No SDK changes, no wrappers, no proxies.</dd>
@@ -181,7 +182,7 @@ assistant &gt; $ sift state --at-turn 5 --json
     <dd>Nothing is sent anywhere. Sessions, snapshots, everything stays on disk.</dd>
 
     <dt>Versioned export schemas <em>(committed for agx; drafted for sift)</em></dt>
-    <dd>Anything meant to be consumed by a sibling or downstream agent is intended to be versioned. agx documents SemVer commitments for its JSON export, trajectory-openai export, and <code>agx-core</code> public API in <a href="https://github.com/brevity1swos/agx/blob/main/docs/stability.md">docs/stability.md</a>. sift&rsquo;s <code>sift_export_version: 1</code> schema is drafted but ships with Phase 1.7 / v0.5. ccr has no machine-readable export yet.</dd>
+    <dd>Anything meant to be consumed by a sibling or downstream agent is intended to be versioned. agx documents SemVer commitments for its JSON export, trajectory-openai export, and <code>agx-core</code> public API in <a href="https://github.com/brevity1swos/agx/blob/main/docs/stability.md">docs/stability.md</a>. sift&rsquo;s <code>sift_export_version: 1</code> schema is drafted but ships with Phase 1.7 / v0.5. ccr ships <code>ccr export --format json</code> but has not yet committed a versioned schema for it.</dd>
 
     <dt>Cross-CLI</dt>
     <dd>ccr resumes Claude Code, Codex, and Gemini CLI from a shared picker. agx supports Claude Code, Codex CLI, Gemini CLI, generic OpenAI-compatible, LangChain / LangSmith, Vercel AI SDK, and OpenTelemetry GenAI (JSON + binary protobuf) out of the box. sift supports Claude Code, Gemini CLI, and Cline via hooks. New CLIs add as a backend module (ccr) or parser module (agx, sift), not a rewrite.</dd>
@@ -196,16 +197,17 @@ assistant &gt; $ sift state --at-turn 5 --json
 
 <section id="install">
   <h2>Install</h2>
-  <pre><code>cargo install ccr</code></pre>
-  <p><code>agx</code> and <code>sift</code> are not yet public &mdash; install commands will land here when their repos flip public. Rust toolchain: 1.88+ for ccr, 1.85+ (edition 2024) for agx, 1.75+ for sift. Platform coverage: Linux, macOS, Windows (ccr); Linux, macOS (agx, sift).</p>
+  <pre><code>cargo install ccr        # Claude Code · Codex · Gemini session picker
+cargo install agx-tui    # agent-session timeline viewer (binary: agx)</code></pre>
+  <p><code>sift</code> is public but not yet on crates.io (its crate name is taken by an unrelated project) &mdash; build it from <a href="https://github.com/brevity1swos/sift">source</a>. Rust toolchain: 1.88+ for ccr, 1.85+ (edition 2024) for agx, 1.75+ for sift. Platform coverage: Linux, macOS, Windows (ccr); Linux, macOS (agx, sift).</p>
 </section>
 
 <section id="status">
   <h2>Status</h2>
   <ul class="status">
-    <li><strong>ccr</strong> &mdash; v0.1.0 on crates.io (2026-04-20). Supports Claude Code / Codex / Gemini CLI via the <code>Backend</code> trait; soft-delete + prune-by-age + <code>ccr restore</code>; live-session detection via <code>pgrep</code>. Ships the <code>v</code> &rarr; <code>agx</code> session hand-off &mdash; the only genuinely end-to-end cross-tool integration in the suite today. <em>Gaps</em>: no <code>--json</code> / <code>--export</code> surface (agents can&rsquo;t query the session index yet), no <code>docs/agent-guide.md</code>, no formal stability document.</li>
-    <li><strong>agx</strong> &mdash; pre-1.0 (v0.1.x), not yet on crates.io. Seven session formats, corpus analytics, side-by-side diff, per-step annotations, opt-in semantic search, PII scanning, trajectory-openai export. <code>docs/stability.md</code> + <code>docs/agent-guide.md</code> + <code>docs/mcp-integration.md</code> shipped. <em>Gaps</em>: <code>tool_use_id</code> not yet serialized on <code>StepKind::ToolUse</code> (blocks sift join); <code>--jump-to &lt;session&gt;:&lt;step&gt;</code> not shipped; <code>agx-py</code> / <code>agx-wasm</code> not yet on PyPI / npm.</li>
-    <li><strong>sift</strong> &mdash; v0.2.x shipped; v0.3 in progress. Hook integration on Claude Code / Gemini / Cline, Codex in the roadmap. The &ldquo;per-turn snapshot oracle&rdquo; reframe and agent-as-primary-user thesis are recent (2026-04-19) and <em>unvalidated</em> &mdash; dogfood (ROADMAP Phase 1.4) pending. <em>Gaps</em>: <code>sift state --at-turn</code>, <code>sift export --format json</code>, <code>sift accept --by-commit</code>, <code>sift doctor</code>, <code>sift fsck</code>, Timeline-jump <code>t</code> keybind all planned for Phase 1.5&ndash;1.7, not shipped.</li>
+    <li><strong>ccr</strong> &mdash; v0.2.1 on crates.io. Supports Claude Code / Codex / Gemini CLI via the <code>Backend</code> trait; nicknames + bookmarks (persisted sidecars); live-session detection via <code>pgrep</code>; scriptable CLI (<code>list</code> / <code>path</code> / <code>show</code> / <code>export --format json</code> / <code>stats</code>). Never modifies your session files. Ships the <code>v</code> &rarr; <code>agx</code> session hand-off &mdash; the only genuinely end-to-end cross-tool integration in the suite today. <em>Gaps</em>: no versioned, stability-committed schema for the JSON export yet, no <code>docs/agent-guide.md</code>, no formal stability document.</li>
+    <li><strong>agx</strong> &mdash; v0.2.0 on crates.io as <code>agx-tui</code> (binary <code>agx</code>). Seven session formats, corpus analytics, side-by-side diff, per-step annotations, opt-in semantic search, PII scanning, trajectory-openai export. <code>docs/stability.md</code> + <code>docs/agent-guide.md</code> + <code>docs/mcp-integration.md</code> shipped. <em>Gaps</em>: <code>tool_use_id</code> not yet serialized on <code>StepKind::ToolUse</code> (blocks sift join); <code>--jump-to &lt;session&gt;:&lt;step&gt;</code> not shipped; <code>agx-py</code> / <code>agx-wasm</code> not yet on PyPI / npm.</li>
+    <li><strong>sift</strong> &mdash; public repo, workspace at v0.1.0 (local pre-release tags toward v0.2.0); not yet on crates.io (crate name taken), install from source. Hook integration on Claude Code / Gemini / Cline, Codex in the roadmap. The &ldquo;per-turn snapshot oracle&rdquo; reframe and agent-as-primary-user thesis are recent (2026-04-19) and <em>unvalidated</em> &mdash; dogfood (ROADMAP Phase 1.4) pending. <em>Gaps</em>: <code>sift state --at-turn</code>, <code>sift export --format json</code>, <code>sift accept --by-commit</code>, <code>sift doctor</code>, <code>sift fsck</code>, Timeline-jump <code>t</code> keybind all planned for Phase 1.5&ndash;1.7, not shipped.</li>
     <li><strong>cross-tool</strong> &mdash; ccr &rarr; agx session hand-off is the one shipped bond. Everything else between the three tools is still planned. No downstream agent-to-agent consumer of the export schemas exists today; until one ships, the &ldquo;shared communication substrate&rdquo; framing is a design hypothesis, not a measured outcome. See <a href="https://github.com/brevity1swos/stepwise/blob/main/docs/gaps.md">docs/gaps.md</a>.</li>
   </ul>
 </section>
