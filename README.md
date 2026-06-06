@@ -50,8 +50,8 @@ All three tool cards use real demo GIFs:
     live-session detection, scriptable CLI (`list` / `path` / `show` /
     `export --format json` / `stats`). Never modifies session files.
   - **agx** — `cargo install agx-tui` (crates.io, v0.2.x; the binary is `agx`).
-  - **sift** — public repo, **not** on crates.io (the `sift` crate name is taken
-    by an unrelated project); install from source. Workspace at v0.1.0.
+  - **sift** — `cargo install sift-tui` (crates.io, v0.1.0; the binary is `sift`).
+    Publishes as `sift-tui` because the bare `sift` crate name is taken.
 - `rgx` (terminal regex debugger) is referenced only as a "Related" footer
   link — it is not part of the stepwise session-lifecycle suite.
 
