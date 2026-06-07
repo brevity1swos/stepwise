@@ -40,7 +40,7 @@
       <p class="one-liner">Walk through your CLI code session files &mdash; find the right one to resume, manage the rest.</p>
     </header>
     <div class="tool-body">
-      <img src="assets/ccr-demo.gif" alt="ccr demo" loading="lazy">
+      <img src="https://raw.githubusercontent.com/brevity1swos/ccr/main/assets/demo.gif" alt="ccr demo" loading="lazy">
       <ul>
         <li>Scans the session stores of Claude Code, Codex, and Gemini CLI and shows every session in a shared TUI ranked by last activity. <code>Enter</code> resumes the selected session in its original working directory, via the right CLI, with its original session id</li>
         <li>Live-session detection via <code>pgrep -f &lt;session-id&gt;</code> before resume; a confirmation modal warns before spawning a second attachment that would interleave JSONL writes and corrupt the session</li>
@@ -80,7 +80,7 @@
       <p class="one-liner">Snapshots what the agent did in each turn &mdash; a queryable per-turn ledger for you and the assistant.</p>
     </header>
     <div class="tool-body">
-      <img src="assets/sift-demo.gif" alt="sift demo" loading="lazy">
+      <img src="https://raw.githubusercontent.com/brevity1swos/sift/main/assets/demo.gif" alt="sift demo" loading="lazy">
       <ul>
         <li><strong>Proposed: agent as primary user.</strong> Hooks silently record every Write / Edit / MultiEdit and Bash-tool mutation, keyed by the conversation turn that caused it. The design intent is that when you ask the assistant &ldquo;what did you change in turn 7?&rdquo; or &ldquo;revert the third edit to <code>src/auth.rs</code>,&rdquo; it runs the matching <code>sift</code> command and answers. The reframe is recent (April 2026); validation that assistants reflexively reach for these commands is <em>pending dogfood</em> (sift ROADMAP Phase 1.4).</li>
         <li>Hook-integrated with Claude Code, Gemini CLI, and Cline. Content-addressed SHA-1 snapshots under <code>.sift/sessions/&lt;id&gt;/</code>. Current surface: <code>sift list</code>, <code>sift log</code>, <code>sift d &lt;id&gt;</code>, <code>sift ok</code> / <code>sift undo</code>, <code>sift sweep</code>, <code>sift review</code> TUI, <code>sift state --at-turn N</code> (reconstruct the file world at any point), and <code>sift export --format json</code> (the ledger as a versioned schema, <code>sift_export_version: 1</code>; <a href="https://github.com/brevity1swos/sift/blob/main/docs/export-schema.md">sift/docs/export-schema.md</a>).</li>
