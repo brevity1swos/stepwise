@@ -2,7 +2,8 @@
 
 Static HTML landing page for **stepwise** — terminal-native tooling for the
 AI-agent session lifecycle: **ccr** finds the session, **agx** walks through
-what happened, **sift** snapshots what the agent did in each turn.
+what happened, **sift** snapshots what the agent did in each turn, and
+**holdout** verifies the change is actually correct.
 
 **Live:** <https://brevity1swos.github.io/stepwise/>
 

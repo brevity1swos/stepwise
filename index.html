@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Stepwise — terminal-native tooling for the AI-agent session lifecycle: find the session, inspect what happened, review what was kept.">
+<meta name="description" content="Stepwise — terminal-native tooling for the AI-agent session lifecycle: find the session, inspect what happened, review what was kept, verify the change is correct.">
 <title>stepwise — terminal-native tooling for the AI-agent session lifecycle</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +12,7 @@
 <header>
   <h1>stepwise</h1>
   <p class="tagline">Terminal-native tooling for the AI-agent session lifecycle.</p>
-  <p class="sub">Three tools: <strong>ccr</strong> finds the session, <strong>agx</strong> walks through what happened, <strong>sift</strong> snapshots what the agent did in each turn. Shared design, narrow scope, zero hosted components.</p>
+  <p class="sub">Four tools: <strong>ccr</strong> finds the session, <strong>agx</strong> walks through what happened, <strong>sift</strong> snapshots what the agent did in each turn &mdash; and <strong>holdout</strong> verifies the change is actually correct. Shared design, narrow scope, zero hosted components.</p>
 </header>
 
 <main>
@@ -20,7 +20,7 @@
 <section id="intro">
   <h2>The gap</h2>
   <p>An AI-assisted workflow leaves three artifacts behind on your disk, and no terminal-native tool to walk through any of them. The session files pile up across <code>~/.claude</code>, <code>~/.codex</code>, <code>~/.gemini</code> and you lose track of which one has the thread you were on. Inside any given session, thousands of JSONL entries record user turns, tool calls, tool results — scroll them by hand and you miss the turn where the assistant silently changed strategy. The same session writes dozens of files, and git only shows you the commit-grain summary after everything has landed.</p>
-  <p>Stepwise is three narrow tools that cover this lifecycle in the terminal. Both you and the agent can walk through with them: the human opens the TUI, the agent reaches for the same tools&rsquo; CLIs over subprocess to answer questions about its own work.</p>
+  <p>Stepwise is three narrow walkers over this lifecycle in the terminal &mdash; plus <strong>holdout</strong>, a verifier that checks the change the agent landed is actually correct. Both you and the agent reach for them: the human opens the TUI, the agent reaches for the same tools&rsquo; CLIs over subprocess to answer questions about &mdash; and check &mdash; its own work.</p>
 </section>
 
 <section id="why">
@@ -91,6 +91,23 @@
       <p class="install"><code>cargo install sift-tui</code> &middot; <a href="https://github.com/brevity1swos/sift">repo</a> &middot; <a href="https://crates.io/crates/sift-tui">crates.io</a> &mdash; binary is <code>sift</code> (the <code>sift</code> crate name is taken, so it publishes as <code>sift-tui</code>)</p>
     </div>
   </article>
+
+  <article class="tool">
+    <header class="tool-head">
+      <h3>holdout</h3>
+      <p class="one-liner">Verifies the change is actually correct &mdash; an agent-facing oracle the candidate cannot read, edit, or memorize against.</p>
+    </header>
+    <div class="tool-body">
+      <img src="https://raw.githubusercontent.com/brevity1swos/holdout/main/assets/demo.gif" alt="holdout demo" loading="lazy">
+      <ul>
+        <li>The other three make the substrate <em>visible</em>; holdout makes correctness <em>checkable</em>. Grade a candidate (a refactor, an optimization, an agent&rsquo;s edit) against a trusted reference on <strong>held-out</strong> or <strong>freshly-generated</strong> inputs it never saw &mdash; passing the visible examples isn&rsquo;t enough. Reports a held-out score, the first divergence, and a scalar reward via exit codes + JSON, so an agent reads it back in-loop.</li>
+        <li>Surfaces: <code>holdout record</code> &rarr; <code>grade</code> (sealed reference-capture refactor loop), <code>verify</code> (live differential over generator-produced inputs), <code>properties</code> (greenfield invariants, no reference needed), <code>watch</code> (a drift digest a human can interrupt mid-loop), procedure-aware gating, and a per-run wall-clock budget so a non-terminating candidate can&rsquo;t hang the grader.</li>
+        <li><strong>A verifier you cannot game.</strong> The oracle is held out-of-band (<code>--seal</code> / <code>HOLDOUT_SEAL</code>) so a workspace-writable agent can&rsquo;t forge it; <code>record --hash-expected</code> stores only BLAKE3 hashes of the held-out answers, so reading the oracle reveals nothing. Honest threat model: robust against a non-adversarial-but-sometimes-wrong agent, not a determined adversary with full workspace access.</li>
+        <li><strong>Validated on real bugs.</strong> 28/29 = 97% on the QuixBugs corpus. And on a real SWE-bench Verified instance (<code>django__django-16485</code>), holdout flags a patch SWE-bench&rsquo;s <em>own official oracle marks resolved</em> &mdash; caught via a held-out <a href="https://github.com/CUHK-Shenzhen-SE/UTBoost">UTBoost</a> test the metric never ran. Working core; <em>not yet on crates.io</em>; Unix-only candidate execution.</li>
+      </ul>
+      <p class="install"><code>cargo install --git https://github.com/brevity1swos/holdout</code> &middot; <a href="https://github.com/brevity1swos/holdout">repo</a> &mdash; crates.io publish pending</p>
+    </div>
+  </article>
 </section>
 
 <section id="composition">
@@ -113,6 +130,10 @@
     <div class="step">
       <h4>4. Snapshot what the agent did in each turn &mdash; sift</h4>
       <p>As the agent writes, sift records a pre/post snapshot per file per turn, keyed by the conversation turn that caused it. Today: walk the ledger in <code>sift review</code>, or query it via <code>sift list</code> / <code>sift log</code> / <code>sift d &lt;id&gt;</code> and accept / revert via <code>sift ok</code> / <code>sift undo</code>. <code>sift sweep</code> flags junk before the next commit. The commands ship today — <code>sift list --path src/auth.rs --json</code> + <code>sift undo &lt;id&gt;</code> back a request like &ldquo;revert the third edit to <code>src/auth.rs</code>,&rdquo; and after <code>git commit</code>, <code>sift accept --by-commit HEAD</code> settles the ledger against what was approved. <em>What&rsquo;s unvalidated</em> is whether assistants reflexively reach for them (dogfood, ROADMAP Phase 1.4).</p>
+    </div>
+    <div class="step">
+      <h4>5. Verify the change is correct &mdash; holdout</h4>
+      <p>Reviewing what the agent did tells you <em>what</em> changed; holdout tells you whether it&rsquo;s <em>right</em>. Capture a trusted reference&rsquo;s behavior (<code>holdout record</code>), then grade the agent&rsquo;s version on held-out or freshly-generated inputs it never saw (<code>holdout grade</code> / <code>verify</code>) &mdash; a refactor that passes the visible examples but breaks behavior elsewhere is caught, with the first divergence localized and a reward the loop can act on. The oracle is held out-of-band, so the agent can&rsquo;t read or forge it. On a real SWE-bench Verified instance, holdout flags a patch the official metric marked &ldquo;resolved.&rdquo;</p>
     </div>
   </div>
 
@@ -178,8 +199,9 @@
   <h2>Install</h2>
   <pre><code>cargo install ccr        # Claude Code · Codex · Gemini session picker
 cargo install agx-tui    # agent-session timeline viewer (binary: agx)
-cargo install sift-tui   # per-turn file-write snapshot oracle (binary: sift)</code></pre>
-  <p>Each binary keeps its short name (<code>ccr</code>, <code>agx</code>, <code>sift</code>); <code>agx</code> and <code>sift</code> publish under <code>-tui</code> suffixes because the bare crate names were taken. Rust toolchain: 1.88+ for ccr, 1.85+ (edition 2024) for agx, 1.75+ for sift. Platform coverage: Linux, macOS, Windows (ccr); Linux, macOS (agx, sift).</p>
+cargo install sift-tui   # per-turn file-write snapshot oracle (binary: sift)
+cargo install --git https://github.com/brevity1swos/holdout   # verification oracle (binary: holdout)</code></pre>
+  <p>Each binary keeps its short name (<code>ccr</code>, <code>agx</code>, <code>sift</code>, <code>holdout</code>); <code>agx</code> and <code>sift</code> publish under <code>-tui</code> suffixes because the bare crate names were taken. <code>holdout</code> installs from git for now (crates.io publish pending; the <code>holdout</code> name is free). Rust toolchain: 1.88+ for ccr, 1.85+ (edition 2024) for agx, 1.75+ for sift, 1.74+ for holdout. Platform coverage: Linux, macOS, Windows (ccr); Linux, macOS (agx, sift, holdout).</p>
 </section>
 
 <section id="status">
@@ -188,6 +210,7 @@ cargo install sift-tui   # per-turn file-write snapshot oracle (binary: sift)</c
     <li><strong>ccr</strong> &mdash; v0.2.1 on crates.io. Supports Claude Code / Codex / Gemini CLI via the <code>Backend</code> trait; nicknames + bookmarks (persisted sidecars); live-session detection via <code>pgrep</code>; scriptable CLI (<code>list</code> / <code>path</code> / <code>show</code> / <code>export --format json</code> / <code>stats</code>). Never modifies your session files. Ships the <code>v</code> &rarr; <code>agx</code> session hand-off &mdash; the only genuinely end-to-end cross-tool integration in the suite today. <em>Gaps</em>: no versioned, stability-committed schema for the JSON export yet, no <code>docs/agent-guide.md</code>, no formal stability document.</li>
     <li><strong>agx</strong> &mdash; v0.2.0 on crates.io as <code>agx-tui</code> (binary <code>agx</code>). Seven session formats, corpus analytics, side-by-side diff, per-step annotations, opt-in semantic search, PII scanning, trajectory-openai export. <code>docs/stability.md</code> + <code>docs/agent-guide.md</code> + <code>docs/mcp-integration.md</code> shipped. <em>Gaps</em>: <code>tool_use_id</code> not yet serialized on <code>StepKind::ToolUse</code> (blocks sift join); <code>--jump-to &lt;session&gt;:&lt;step&gt;</code> not shipped; <code>agx-py</code> / <code>agx-wasm</code> not yet on PyPI / npm.</li>
     <li><strong>sift</strong> &mdash; <strong>v0.1.0 on crates.io as <code>sift-tui</code></strong> (binary <code>sift</code>; <code>siftcore</code> + <code>sift-render</code> libs ship alongside). Hook integration on Claude Code / Gemini / Cline, Codex in the roadmap. <code>sift state --at-turn</code>, <code>sift export --format json</code>, <code>sift accept --by-commit</code>, <code>sift doctor</code>, and <code>sift fsck</code> all ship today. The &ldquo;per-turn snapshot oracle&rdquo; reframe and agent-as-primary-user thesis are recent (2026-04-19) and <em>unvalidated</em> &mdash; dogfood (ROADMAP Phase 1.4) pending. <em>Gaps</em>: the Timeline-jump <code>t</code> keybind (blocked on agx serializing <code>tool_use_id</code>) and a stability-committed, stress-tested export schema.</li>
+    <li><strong>holdout</strong> &mdash; working core, <strong>not yet on crates.io</strong> (install via git; the <code>holdout</code> crate name is free, <code>cargo publish --dry-run</code> clean). Six subcommands ship: <code>seal</code> / <code>record</code> / <code>grade</code> / <code>verify</code> / <code>watch</code> / <code>properties</code>, plus procedure-aware gating, a wall-clock budget, out-of-band seal, and <code>--hash-expected</code>. <strong>Validated on real bugs:</strong> 97% catch on QuixBugs, and it flags a real SWE-bench Verified false-green (<code>django__django-16485</code>, officially resolved) via a held-out UTBoost test, on a real Docker eval. <em>Gaps</em>: that&rsquo;s one confirmed false-green, not a measured rate (the full augmented sweep across models is unrun); no MCP server yet so agents shell out to the CLI; never dogfooded inside a real agent loop beyond a single controlled trial; Unix-only candidate execution.</li>
     <li><strong>cross-tool</strong> &mdash; ccr &rarr; agx session hand-off is the one shipped bond. Everything else between the three tools is still planned. No downstream agent-to-agent consumer of the export schemas exists today; until one ships, the &ldquo;shared communication substrate&rdquo; framing is a design hypothesis, not a measured outcome. See <a href="https://github.com/brevity1swos/stepwise/blob/main/docs/gaps.md">docs/gaps.md</a>.</li>
   </ul>
 </section>
@@ -200,7 +223,7 @@ cargo install sift-tui   # per-turn file-write snapshot oracle (binary: sift)</c
 </main>
 
 <footer>
-  <p>Stepwise is three independent repositories under <a href="https://github.com/brevity1swos">brevity1swos</a>. MIT or Apache-2.0.</p>
+  <p>Stepwise is four independent repositories under <a href="https://github.com/brevity1swos">brevity1swos</a>. MIT or Apache-2.0.</p>
 </footer>
 
 </body>
