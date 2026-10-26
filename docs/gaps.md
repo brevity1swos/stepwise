@@ -1,16 +1,17 @@
 # stepwise — promise vs. implementation gap tracker
 
 The `stepwise` landing page (`index.html`) makes claims about what the
-three-tool suite does for humans, for agents, and between agents. This
+four-tool suite does for humans, for agents, and between agents. This
 document audits those claims against what&rsquo;s actually shipped in the
-`ccr`, `agx`, and `sift` repos — and enumerates what would have to land
+`ccr`, `agx`, `sift`, and `holdout` repos — and enumerates what would have to land
 before the page could drop the hedge-words.
 
-**Suite scope.** Stepwise is three tools:
+**Suite scope.** Stepwise is four tools:
 
 - **ccr** — find the session (cross-CLI session picker).
 - **agx** — walk through the session (timeline viewer).
-- **sift** — gate what was kept (per-turn write ledger).
+- **sift** — snapshot what the agent did in each turn (per-turn write ledger).
+- **holdout** — verify the change is correct (held-out grading oracle).
 
 `rgx` is a *related tool* by the same author, not a suite member. The
 landing page links to it in a "Related" footer; this gap tracker does
@@ -25,8 +26,13 @@ commit / PR. When the page adds a new claim, the claim must come with
 its gap row here — the landing page is not allowed to be ahead of
 this document.
 
-**Last audited:** 2026-04-20 (ccr v0.1.0 added; rgx demoted to related
-tool; stepwise re-positioned as three-tool).
+**Last audited:** 2026-10-26 against crates.io (ccr 0.2.6, agx-tui /
+agx-mcp 0.2.1, sift-tui 0.1.1, holdout 0.1.1): holdout added as the
+fourth tool; sift `state` / `export` / `doctor` / `fsck` and the `t`
+hand-off marked shipped; agx `--jump-to` / `doctor` / `agx-mcp` marked
+shipped; ccr `export --format json` marked shipped; license and Windows claims
+corrected). Previous: 2026-04-20 (ccr v0.1.0 added; rgx demoted to
+related tool).
 
 ---
 
@@ -45,7 +51,8 @@ tool; stepwise re-positioned as three-tool).
    exports, another consumes, zero instrumentation in between.
 5. **Named cross-tool integrations** — *Session hand-off*
    (ccr &rarr; agx, shipped v0.1.0), *Timeline jump* (sift &rarr; agx,
-   planned), *Sift overlay in agx* (planned).
+   shipped at session level; step-level planned), *Sift overlay in agx*
+   (planned).
 6. **Communication substrate** — the tools collectively serve as a
    shared vocabulary for human &harr; agent &harr; agent coordination
    over agentic work.
@@ -60,15 +67,15 @@ stepwise command and answers.&rdquo;
 **Requires:** the assistant knows the tool exists, knows the command
 surface, and reaches for it reflexively.
 
-| Artifact | ccr | agx | sift |
-|---|---|---|---|
-| `docs/agent-guide.md` | &mdash; open | shipped | shipped |
-| `--ai-help` flag | open | open | open |
-| Project CLAUDE.md injection via `init` | open | open | open |
-| Dogfood log of agent reflex-use | open | open | open |
+| Artifact | ccr | agx | sift | holdout |
+|---|---|---|---|---|
+| `docs/agent-guide.md` | &mdash; open | shipped | shipped | &mdash; open |
+| `--ai-help` flag | open | open | open | open |
+| Project CLAUDE.md injection via `init` | open | open | open | open |
+| Dogfood log of agent reflex-use | open | open | open | open (one controlled trial) |
 
-**Closes when:** (a) `ccr/docs/agent-guide.md` exists alongside
-agx&rsquo;s and sift&rsquo;s, (b) each tool has an `--ai-help` stdout
+**Closes when:** (a) `ccr/docs/agent-guide.md` and
+`holdout/docs/agent-guide.md` exist alongside agx&rsquo;s and sift&rsquo;s, (b) each tool has an `--ai-help` stdout
 dump, (c) `ccr init` (new) / `agx init` / `sift init` optionally drop
 a stanza into the project&rsquo;s CLAUDE.md, and (d) a 20-session
 dogfood in a fresh Claude Code project shows assistants reaching for
@@ -86,10 +93,12 @@ schemas.&rdquo;
 | `agx --export json` | [agx/docs/stability.md](https://github.com/brevity1swos/agx/blob/main/docs/stability.md) | &mdash; see gap 2a | documented | v0.1.x |
 | `agx --export trajectory-openai` | described in `eval-integration.md` | &mdash; | documented | v0.1.x |
 | `agx-core` public API | stability.md | Cargo SemVer | pre-1.0 | v0.1.x |
-| `sift export --format json` | [sift/docs/export-schema.md](https://github.com/brevity1swos/sift/blob/main/docs/export-schema.md) | `sift_export_version: 1` | drafted | v0.5 (Phase 1.7, planned) |
-| `sift state --format json` | implied by Phase 1.7 | &mdash; | planned | v0.5 (Phase 1.7, planned) |
+| `sift export --format json` | [sift/docs/export-schema.md](https://github.com/brevity1swos/sift/blob/main/docs/export-schema.md) | `sift_export_version: 1` | versioned; untested by a consumer (Gap 3) | **shipped** (v0.1.x) |
+| `sift state --at-turn N --json` | agent-guide.md | &mdash; | &mdash; | **shipped** (v0.1.x) |
+| `ccr export <id> --format json` | &mdash; open | &mdash; open | &mdash; open | **shipped**, unversioned |
 | `ccr list --json` (proposed) | &mdash; open | &mdash; | &mdash; | not shipped &mdash; `ccr list` today emits plain text only |
 | `ccr` session-record schema | &mdash; open | &mdash; | &mdash; | not shipped &mdash; would formalize the `Session` shape (tool, id, cwd, title, last_activity, preview) for downstream consumers |
+| `holdout grade --json` | &mdash; open | &mdash; open | &mdash; open | **shipped**, unversioned |
 
 ### Sub-gap 2a — `tool_use_id` on agx export
 
@@ -135,15 +144,16 @@ the turn that produced the write.
 
 **Reality:**
 
-- sift&rsquo;s `t` keybind is Phase 1.3, unchecked.
-- Even when it ships, it can only open agx at *session* level because
-  agx does not expose `--jump-to <session>:<step>`.
-- Step-level jump further requires sub-gap 2a (agx serializing
-  `tool_use_id`) before the join is reliable.
+- sift&rsquo;s `t` keybind ships (sift-tui v0.1.0) and opens agx at
+  *session* level.
+- agx ships `--jump-to <STEP>` (agx-tui v0.2.x), so the launch side of
+  the contract exists.
+- sift can&rsquo;t compute `<STEP>` for a ledger entry until sub-gap 2a
+  (agx serializing `tool_use_id` on exported steps) closes.
 
-**Closes when:** (a) agx adds `tool_use_id` to JSON export, (b) agx
-adds `--jump-to <session>:<step>` CLI flag, (c) sift implements the
-`t` keybind to pass `<session>:<step>` through.
+**Closes when:** (a) agx adds `tool_use_id` to JSON export, (b) sift
+maps the entry&rsquo;s tool call to a step index and passes
+`--jump-to <STEP>` through on `t`.
 
 ---
 
@@ -171,9 +181,10 @@ whether the behavior changed review decisions.
 
 | Tool | Shipped machine output | Gaps |
 |---|---|---|
-| ccr | `ccr list` (plain text only) | No `--json` surface at all — agents can&rsquo;t query the session index; no structured errors |
+| ccr | `ccr list` / `path` / `show` / `stats` (plain text), `ccr export --format json` | No JSON on `list` — agents can&rsquo;t query the session index programmatically; no structured errors |
 | agx | `--summary`, `--export md|html|json|trajectory-openai`, `corpus --json|--jsonl` | `--summary` is human-formatted (no JSON twin); no structured errors |
-| sift | `--json` on `list`, `log`, `status`, `history`, `doctor` (planned), `fsck` (planned) | Not every subcommand has `--json`; structured error shapes (e.g. `{"error": "no_entries_for_turn", "turn": 99}`) not yet a convention |
+| sift | `--json` on `list`, `log`, `status`, `history`, `state`, `doctor`, `fsck`; `export --format json` | Not every subcommand has `--json`; structured error shapes (e.g. `{"error": "no_entries_for_turn", "turn": 99}`) not yet a convention |
+| holdout | exit codes + `--json` on `grade` | JSON parity across `verify` / `properties` / `watch` unaudited; no structured errors; no MCP server |
 
 **Closes when:** every subcommand an agent might reasonably call has
 a `--json` (or `--format json`) twin, and error paths emit structured
@@ -188,16 +199,19 @@ a hard failure.&rdquo;
 
 **Reality:**
 
-- ccr&rsquo;s `v`-to-agx hand-off is feature-detected (shipped); this
-  is the only sibling probe currently working in the suite.
-- sift `doctor` subcommand is planned (Phase 1.6), not shipped.
-- agx has no `doctor` equivalent and no sibling probes.
+- ccr&rsquo;s `v`-to-agx hand-off is feature-detected (shipped).
+- sift `doctor` ships (agx / rgx sibling detection, `--json`).
+- agx `doctor` ships (version, features, sift / rgx / agx-mcp
+  availability).
+- ccr and holdout have no `doctor` equivalent.
 - None of the tools version-parse their siblings for compat checks.
 
 **Closes when:** each tool ships a `doctor` (or equivalent) that
 probes for siblings on `PATH`, parses their `--version`, and reports
 whether each sibling&rsquo;s CLI surface meets the minimum-supported
-contract from `docs/suite-conventions.md` §5.
+contract from `suite-conventions.md` §5 (kept in
+[sift/docs/](https://github.com/brevity1swos/sift/blob/main/docs/suite-conventions.md)
+and agx/docs/).
 
 ---
 
@@ -226,8 +240,8 @@ installed.
 | Integration | Direction | Status | Blocker |
 |---|---|---|---|
 | *Session hand-off* (`v`) | ccr &rarr; agx | **shipped** (ccr v0.1.0, 2026-04-20) | &mdash; |
-| *Timeline jump* (`t`) | sift &rarr; agx | planned, Phase 1.3 | Gap 2a + Gap 4 |
-| *Sift overlay* | agx &rarr; sift (consumer) | planned | Gap 2 (sift export schema ship) + agx-side consumer |
+| *Timeline jump* (`t`) | sift &rarr; agx | **shipped, session level** (sift-tui v0.1.0); step-level planned | step-level: Gap 2a + Gap 4 |
+| *Sift overlay* | agx &rarr; sift (consumer) | planned | agx-side consumer (sift export has shipped) |
 
 **Closes when:** each integration has a PR link under it, a sibling-
 independent smoke test, and a line in the README cross-tool compat
@@ -241,13 +255,14 @@ an integration only after it clears this bar.
 | Page section | Honest today? |
 |---|---|
 | Intro / thesis | Yes (recast as hypothesis, not shipped claim). |
-| ccr tool card | Yes. `v`-to-agx integration shipped; `--json` gap called out. |
-| agx tool card | Yes. agx-py/agx-wasm status caveated; `tool_use_id` gap noted. |
-| sift tool card | Yes. Phase 1.5–1.7 items tagged planned. |
-| Composition workflow | Yes. Step 4 distinguishes today vs Phase 1.7. |
+| ccr tool card | Yes. `v`-to-agx integration shipped; Unix-only live-session guard called out. |
+| agx tool card | Yes. agx-py/agx-wasm status caveated; `tool_use_id` gap noted; `--jump-to` / `doctor` / `agx-mcp` shipped. |
+| sift tool card | Yes. `state` / `export` / `doctor` / `fsck` shipped; agent-first thesis tagged unvalidated. |
+| holdout tool card | Yes. One confirmed false-green, not a measured rate; threat model stated. |
+| Composition workflow | Yes. Step 4 tags agent reflex-use as unvalidated. |
 | Communication surfaces | Yes. Each direction tags its gap. |
-| Named integrations | Yes. *Session hand-off* shipped; others tagged planned. |
-| Shared principles | Yes. Dual-addressed and Versioned schemas both caveated. |
+| Named integrations | Yes. *Session hand-off* shipped; *Timeline jump* shipped at session level; overlay tagged planned. |
+| Shared principles | Yes. Dual-addressed and Versioned schemas caveated; sift&rsquo;s hooks named as the instrumentation exception. |
 | Install | Yes. |
 | Status | Yes; explicitly links here. |
 | Related | Yes. rgx linked without bond-dropping — no integrations pre-announced. |
@@ -270,10 +285,12 @@ an integration only after it clears this bar.
 5. **One downstream consumer** (Gap 3). Pick the smallest of the
    three candidates; ship it; its bugs become the feedback loop that
    tests the stability commitments.
-6. **sift Phase 1.7 (`sift state`, `sift export`, `sift accept
-   --by-commit`)** (Gaps 2, 4 foundations). Already specced.
-7. **agx `--jump-to <session>:<step>`** (Gap 4).
-8. **Per-tool `doctor`** (Gap 7).
+6. ~~**sift Phase 1.7 (`sift state`, `sift export`, `sift accept
+   --by-commit`)**~~ — shipped.
+7. ~~**agx `--jump-to`**~~ — shipped as `--jump-to <STEP>`; sift
+   still needs sub-gap 2a to use it at step level (Gap 4).
+8. **Per-tool `doctor`** (Gap 7). agx and sift ship; ccr and holdout
+   open.
 9. **sift Phase 1.4 dogfood + notes file** (Gap 5). Falsifiable
    signal on whether the agent-as-primary-user thesis holds.
 10. **`docs/principals.md`** (Gap 8). Cheap once the command

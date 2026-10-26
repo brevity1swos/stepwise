@@ -39,14 +39,14 @@ pre {
 }
 pre code { background: transparent; padding: 0; }
 
-header {
+body > header {
   max-width: 860px;
   margin: 0 auto;
   padding: 80px 28px 40px;
   border-bottom: 1px solid var(--border);
 }
 
-header h1 {
+body > header h1 {
   font-family: var(--mono);
   font-size: 2.4rem;
   font-weight: 600;
@@ -55,13 +55,13 @@ header h1 {
   color: var(--fg);
 }
 
-header .tagline {
+body > header .tagline {
   font-size: 1.15rem;
   margin: 0 0 6px;
   color: var(--fg);
 }
 
-header .sub {
+body > header .sub {
   font-size: 0.98rem;
   margin: 0;
   color: var(--fg-dim);
@@ -130,6 +130,7 @@ p { margin: 0 0 14px; }
 .tool-body img {
   max-width: 100%;
   width: 100%;
+  height: auto;
   border: 1px solid var(--border);
   border-radius: 4px;
   margin: 8px 0 18px;
@@ -146,13 +147,6 @@ p { margin: 0 0 14px; }
   font-size: 0.92rem;
   color: var(--fg-dim);
   margin: 0;
-}
-
-.code-preview {
-  margin: 8px 0 18px;
-}
-.code-preview pre {
-  background: #0a0c0f;
 }
 
 /* Workflow steps */
@@ -197,6 +191,8 @@ p.thesis strong { color: var(--accent); font-family: var(--mono); }
   font-size: 0.92rem;
   color: var(--fg-dim);
 }
+.integrations-note.integrations-lead { margin-top: 0; margin-bottom: 14px; }
+.integrations h4.integrations-sub { margin-top: 28px; }
 
 /* Principles */
 dl { margin: 0; }
@@ -234,8 +230,8 @@ footer {
 }
 
 @media (max-width: 600px) {
-  header { padding: 48px 20px 28px; }
-  header h1 { font-size: 2rem; }
+  body > header { padding: 48px 20px 28px; }
+  body > header h1 { font-size: 2rem; }
   main { padding: 0 20px; }
   section { padding: 28px 0; }
 }

@@ -32,11 +32,11 @@ there are no underscore-prefixed paths. To attach a custom domain, add a
 
 ## Assets
 
-All three tool cards use real demo GIFs:
-
-- `assets/ccr-demo.gif`, `assets/agx-demo.gif`, `assets/sift-demo.gif` — copied
-  from each tool repo's `assets/demo.gif`. Regenerate the source with `vhs`
-  (each repo has an `assets/demo.tape`), then re-copy.
+There is no local `assets/` directory. All four tool cards hotlink each tool
+repo's `assets/demo.gif` via `raw.githubusercontent.com/brevity1swos/<tool>/main/`,
+so a GIF regenerated in its own repo (`vhs assets/demo.tape`) shows up here once
+pushed. If a regenerated GIF changes size, update the `width` / `height`
+attributes on its `<img>` in `index.html` to keep layout shift at zero.
 
 ## Content notes
 
@@ -44,15 +44,18 @@ All three tool cards use real demo GIFs:
 - No mention of "AI-driven development" philosophy or internal framing — that
   stays out of public-facing copy.
 - Each tool's bullets are sourced from the respective repo's `README.md`
-  (`ccr/README.md`, `agx/README.md`, `sift/README.md`). Keep ship-status
+  (`ccr/README.md`, `agx/README.md`, `sift/README.md`, `holdout/README.md`). Keep ship-status
   claims honest — current gaps are tracked in `docs/gaps.md`.
 - Install / status, current as of this revision:
   - **ccr** — `cargo install ccr` (crates.io, v0.2.x). Nicknames + bookmarks,
     live-session detection, scriptable CLI (`list` / `path` / `show` /
     `export --format json` / `stats`). Never modifies session files.
   - **agx** — `cargo install agx-tui` (crates.io, v0.2.x; the binary is `agx`).
-  - **sift** — `cargo install sift-tui` (crates.io, v0.1.0; the binary is `sift`).
+    `agx-mcp` (MCP server) publishes alongside.
+  - **sift** — `cargo install sift-tui` (crates.io, v0.1.x; the binary is `sift`).
     Publishes as `sift-tui` because the bare `sift` crate name is taken.
+  - **holdout** — `cargo install holdout` (crates.io, v0.1.x). Unix-only
+    candidate execution.
 - `rgx` (terminal regex debugger) is referenced only as a "Related" footer
   link — it is not part of the stepwise session-lifecycle suite.
 
