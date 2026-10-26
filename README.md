@@ -21,14 +21,22 @@ Or with any other static server — `npx serve`, `caddy file-server`, etc.
 
 ## Deployment
 
-The site is published with **GitHub Pages**, served from `main` at `/ (root)`.
-Pushing to `main` triggers a Pages rebuild; the live site updates within a
-minute or two at <https://brevity1swos.github.io/stepwise/>.
+The site is published with **GitHub Pages** by the `pages` workflow
+(`.github/workflows/pages.yml`; Settings → Pages → source = *GitHub Actions*).
 
-To change the Pages config: repo **Settings → Pages** (source =
-*Deploy from a branch* → `main` → `/ (root)`). No `.nojekyll` is needed —
-there are no underscore-prefixed paths. To attach a custom domain, add a
-`CNAME` file and configure it under Settings → Pages.
+- **Every push and PR** runs a lychee link check over `index.html`,
+  `README.md`, and `docs/gaps.md`. A broken link fails the run.
+- **Pushes to `main`** deploy only after the link check passes. Only
+  `index.html` and `style.css` are published — no Jekyll, so README and
+  `docs/` are not rendered onto the site.
+- **Weekly (Monday 06:00 UTC)** the link check re-runs without deploying,
+  because the demo GIFs and doc links point into sibling repos that can
+  change without a push here.
+
+Run the same check locally with `lychee --header 'Accept: text/html'
+--exclude '^https://brevity1swos\.github\.io/' index.html README.md docs/gaps.md`.
+The `Accept` header is needed because crates.io returns 404 to non-browser
+clients. To attach a custom domain, configure it under Settings → Pages.
 
 ## Assets
 
