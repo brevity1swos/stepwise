@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # Actions in pages.yml are SHA-pinned; this keeps the pins current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]

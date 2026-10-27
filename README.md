@@ -31,7 +31,11 @@ The site is published with **GitHub Pages** by the `pages` workflow
   `docs/` are not rendered onto the site.
 - **Weekly (Monday 06:00 UTC)** the link check re-runs without deploying,
   because the demo GIFs and doc links point into sibling repos that can
-  change without a push here.
+  change without a push here. The same scheduled run re-enables the
+  workflow via the API so GitHub's 60-day inactivity rule doesn't switch
+  the schedule off.
+- **Dependabot** (`.github/dependabot.yml`) opens a monthly grouped PR when
+  any SHA-pinned action has a new release; the link check runs on it.
 
 Run the same check locally with `lychee --header 'Accept: text/html'
 --exclude '^https://brevity1swos\.github\.io/' index.html README.md docs/gaps.md`.
