@@ -49,7 +49,7 @@
       <img src="https://raw.githubusercontent.com/brevity1swos/ccr/main/assets/demo.gif" alt="ccr demo: a session list across Claude Code, Codex, and Gemini CLI, ranked by last activity" width="1100" height="650" loading="lazy">
       <ul>
         <li>Scans the session stores of Claude Code, Codex, and Gemini CLI and shows every session in a shared TUI ranked by last activity. <code>Enter</code> resumes the selected session in its original working directory, via the right CLI, with its original session id</li>
-        <li>Live-session detection via <code>pgrep</code> before resume; a confirmation modal warns before spawning a second attachment that would interleave JSONL writes and corrupt the session. Unix only &mdash; Windows has no <code>pgrep</code>, so the guard is skipped there</li>
+        <li>Live-session detection via <code>pgrep</code> before resume; a confirmation modal warns before spawning a second attachment that would interleave JSONL writes and corrupt the session.</li>
         <li>Press <code>n</code> to give any session a yellow nickname and <code>b</code> to bookmark it (★); both persist as sidecar files and are searched by <code>/</code> alongside title, cwd, tool, and content</li>
         <li>Read-only at rest. <code>ccr</code> never modifies your session files; the only writes are the bookmark and nickname sidecars under <code>~/.ccr/</code></li>
         <li>Unix-composable CLI surface for scripts and agents: <code>ccr list</code>, <code>ccr path &lt;id&gt;</code>, <code>ccr show &lt;id&gt;</code>, <code>ccr export &lt;id&gt; --format json</code>, and <code>ccr stats</code> (per-tool / per-project / 30-day histogram)</li>
@@ -208,7 +208,7 @@
 cargo install agx-tui    # agent-session timeline viewer (binary: agx)
 cargo install sift-tui   # per-turn file-write snapshot oracle (binary: sift)
 cargo install holdout    # agent-facing verification oracle (binary: holdout)</code></pre>
-  <p>Each binary keeps its short name (<code>ccr</code>, <code>agx</code>, <code>sift</code>, <code>holdout</code>); <code>agx</code> and <code>sift</code> publish under <code>-tui</code> suffixes because the bare crate names were taken, while <code>ccr</code> and <code>holdout</code> publish under their own names. Rust toolchain: 1.88+ for ccr, 1.85+ (edition 2024) for agx, 1.75+ for sift, 1.74+ for holdout. Platform coverage: Linux, macOS, Windows (ccr &mdash; live-session detection is Unix-only); Linux, macOS (agx, sift, holdout).</p>
+  <p>Each binary keeps its short name (<code>ccr</code>, <code>agx</code>, <code>sift</code>, <code>holdout</code>); <code>agx</code> and <code>sift</code> publish under <code>-tui</code> suffixes because the bare crate names were taken, while <code>ccr</code> and <code>holdout</code> publish under their own names. Rust toolchain: 1.88+ for ccr, 1.85+ (edition 2024) for agx, 1.75+ for sift, 1.74+ for holdout. Platform coverage: Linux, macOS, Windows (agx); Linux, macOS (ccr, sift, holdout).</p>
 </section>
 
 <section id="status">

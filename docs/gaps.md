@@ -30,8 +30,8 @@ this document.
 agx-mcp 0.2.1, sift-tui 0.1.1, holdout 0.1.1): holdout added as the
 fourth tool; sift `state` / `export` / `doctor` / `fsck` and the `t`
 hand-off marked shipped; agx `--jump-to` / `doctor` / `agx-mcp` marked
-shipped; ccr `export --format json` marked shipped; license and Windows claims
-corrected). Previous: 2026-04-20 (ccr v0.1.0 added; rgx demoted to
+shipped; ccr `export --format json` marked shipped; license and platform claims
+corrected per each repo's CI matrix). Previous: 2026-04-20 (ccr v0.1.0 added; rgx demoted to
 related tool).
 
 ---
