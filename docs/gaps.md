@@ -26,7 +26,7 @@ commit / PR. When the page adds a new claim, the claim must come with
 its gap row here — the landing page is not allowed to be ahead of
 this document.
 
-**Last audited:** 2026-11-09 against crates.io (ccr 0.2.9, agx-tui 0.3.3,
+**Last audited:** 2026-11-10 against crates.io (ccr 0.2.9, agx-tui 0.3.4,
 agx-mcp 0.2.4, sift-tui 0.1.1, holdout 0.1.1): sub-gap 2a closed (agx
 exports `tool_call_id`); `agx subagents` and its claim check added as
 Gap 10. Previous: 2026-10-26 (holdout added as the
