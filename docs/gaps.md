@@ -26,7 +26,7 @@ commit / PR. When the page adds a new claim, the claim must come with
 its gap row here — the landing page is not allowed to be ahead of
 this document.
 
-**Last audited:** 2026-11-10 against crates.io (ccr 0.2.9, agx-tui 0.3.4,
+**Last audited:** 2026-11-14 against crates.io (ccr 0.2.9, agx-tui 0.4.0,
 agx-mcp 0.2.4, sift-tui 0.1.1, holdout 0.1.1): sub-gap 2a closed (agx
 exports `tool_call_id`); `agx subagents` and its claim check added as
 Gap 10. Previous: 2026-10-26 (holdout added as the
@@ -258,7 +258,9 @@ an integration only after it clears this bar.
 ## Gap 10 — Checking agent claims
 
 **Claim:** `agx subagents` checks a subagent&rsquo;s &ldquo;tests
-pass&rdquo; report against the subagent&rsquo;s own last test run.
+pass&rdquo; report against the subagent&rsquo;s own last test run, and
+`agx --live --notify-on-claims` alerts when a new report fails the
+check.
 
 **Reality:**
 
@@ -269,15 +271,18 @@ pass&rdquo; report against the subagent&rsquo;s own last test run.
 - Claude Code only (reads `<session-id>/subagents/`).
 - Test claims only. File-change claims (&ldquo;I edited 3 files&rdquo;)
   are not checked against sift&rsquo;s ledger.
-- Runs on demand. Nothing alerts the user when a hand-back is
-  `contradicted` or `stale`.
+- Live alert since agx-tui 0.4.0: `--live --notify-on-claims` alerts
+  on each new hand-back whose verdict isn&rsquo;t `supported`. Only
+  while the user is watching the session with `--live`; the status-bar
+  message is replaced by the next one, and the desktop notification
+  needs a build with `--features notifications` (not the default).
 - Summary parsing covers cargo, nextest, pytest, jest, and vitest.
   `supported` means the transcript backs the claim, not that the tests
   are adequate; holdout is the suite&rsquo;s answer to that.
 
 **Closes when:** the page says no more than the list above. Each
 item removed from it (another agent format, file-change claims via
-sift, a live alert) needs its PR merged first.
+sift, alerts without `--live`) needs its PR merged first.
 
 ---
 
